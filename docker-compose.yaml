@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: status-new-backend
+    command: bash -c "service ssh start && ls -a && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 3"
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    volumes:
+      - .:/srv/app
+
+  # cache:
+  #   image: redis:latest
+  #   container_name: quiz-app-cache
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - app-network
+
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+    container_name: postgres
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    env_file:
+      - ./.env
+    container_name: pgadmin
+    ports:
+      - 5050:80
+    volumes:
+      - ./servers.json/:/pgadmin4/servers.json
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
