@@ -16,8 +16,8 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(router)
 
 @app.get("/force-load")
-def force_load():
-    weekly_data_sync()
+async def force_load():
+    await weekly_data_sync()
     return {"message": "Data synced"}
 
 register_tortoise(
