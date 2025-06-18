@@ -15,6 +15,14 @@ class EnvSettings(BaseSettings):
 #     ALGORITHM: str
 #     ACCESS_TOKEN_EXPIRE: int
 
+class CNORDSettings(EnvSettings):
+    """
+    Настройки для CNORD
+    """
+
+    CNORD_URL: str
+    CNORD_PORT: str
+    CNORD_API_KEY: str
 
 class DBSettings(EnvSettings):
     """
@@ -40,6 +48,7 @@ class Settings(EnvSettings):
     # api_str: str = "/api/v1"
     # DATABASE_URL: str = "postgresql+asyncpg://user:pass@db:5432/db"
     db: DBSettings = DBSettings()
+    cnord: CNORDSettings = CNORDSettings()
     # jwt: JWTSettings = JWTSettings()
     # email: EmailSettings = EmailSettings()
 

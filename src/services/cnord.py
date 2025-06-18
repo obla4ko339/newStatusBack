@@ -1,17 +1,19 @@
 from httpx import AsyncClient
 from src.models.customers import Customer
 from src.models.serure_objects import SecurityObject
+from src.core.settings import settings
+
 class CnordClient:
     def __init__(self):
-        self.client = AsyncClient(base_url="http://localhost:9002")
+        self.client = AsyncClient(base_url=f"http://{settings.cnord.CNORD_URL}:{settings.cnord.CNORD_PORT}")
 
     async def write_security_objects(self):
         """
         Запись или обновление объектов охраны в БД с охранного сервера
         """
-        response = await self.client.get("/api/Objects")
+        response = await self.client.get("/api/Sites",params={"apiKey":settings.cnord.CNORD_API_KEY})
         data = response.json()
-
+        print(data)
         ids = [item["Id"] for item in data]
         objects = [SecurityObject(**item) for item in data]
 
