@@ -1,6 +1,8 @@
+from src.core.settings import settings
+
 TORTOISE_ORM = {
     "connections": {
-        "default": "postgres://user:password@localhost:5432/dbname"
+        "default": settings.db.connection_string
     },
     "apps": {
         "models": {

@@ -1,5 +1,5 @@
 DOCKER_COMP = docker compose -f docker-compose.yaml
-MANAGER = $(DOCKER_COMP) exec status-new-backend uv run
+MANAGER = $(DOCKER_COMP) exec backend uv run
 AERICH = $(MANAGER) aerich
 
 up:
@@ -24,7 +24,7 @@ init-db:
 	@$(AERICH) init-db
 
 init-aerich:
-	@$(AERICH) init -t config.TORTOISE_ORM
+	@$(AERICH) init -t src.core.db.TORTOISE_ORM
 
 logs:
 	@$(DOCKER_COMP) logs $(name) --tail=0 --follow
