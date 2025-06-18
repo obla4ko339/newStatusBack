@@ -7,7 +7,7 @@ client = CnordClient()
 scheduler = AsyncIOScheduler()
 
 async def weekly_data_sync():
-    results = await client.write_secure_objects()
+    results = await client.write_security_objects()
     for id in results["ids"]:
         await client.write_customers(site_id=id)
 
