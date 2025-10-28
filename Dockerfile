@@ -28,8 +28,12 @@ COPY . /srv/app
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-WORKDIR /srv/app
-RUN pip install uv
+WORKDIR /srv/app 
+RUN pip install uv && \
+    pip install apscheduler && \
+    pip install asyncz && \
+    pip install fastapi-utilities
 
 
 RUN uv pip install -r pyproject.toml
+ 

@@ -1,38 +1,72 @@
 from httpx import AsyncClient
 from src.models.customers import Customer
 from src.models.serure_objects import SecurityObject
+from src.models.list_objects import ListObjects
+from src.models.list_customers import ListCustomers
+from src.models.list_events import ListEvents
 from src.core.settings import settings
+from datetime import datetime, timezone
 
 class CnordClient:
     def __init__(self):
         self.client = AsyncClient(base_url=f"http://{settings.cnord.CNORD_URL}:{settings.cnord.CNORD_PORT}")
 
-    async def write_security_objects(self):
+
+    
+
+    async def getSites(self):
+        
         """
         Запись или обновление объектов охраны в БД с охранного сервера
         """
-        response = await self.client.get("/api/Sites",params={"apiKey":settings.cnord.CNORD_API_KEY})
+        response = await self.client.get("/api/Sites",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
         data = response.json()
-        print(data)
+        
         ids = [item["Id"] for item in data]
-        objects = [SecurityObject(**item) for item in data]
+        
+        # objects = [SecurityObject(**item) for item in data]
+        objects = []
+        for item in data:
+            try:
+                date_fields = ['PaymentDate', 'DisableDate', 'AutoEnableDate', 'StateArmDisArmDateTime']
+                for field in date_fields:
+                    if item[field] == '1899-12-30T00:00:00':
+                        item[field] = None
+                    else:
+                        dt_str = item[field].replace('Z', '+00:00')
+                        item[field] = datetime.fromisoformat(dt_str).astimezone(timezone.utc)
+                objects.append(ListObjects(**item))
+            except Exception as err:
+                print(f"ошибка в элементе {item}", err)
+        # return False
 
-        await SecurityObject.bulk_create(
-            objects,
-            on_conflict=["Id"],  
-            update_fields=[ 
-                "AccountNumber", "CloudObjectID", "Name", "ObjectPassword", "Address",
-                "Phone1", "Phone2", "TypeName", "IsFire", "IsArm", "IsPanic",
-                "DeviceTypeName", "EventTemplateName", "ContractNumber", "ContractPrice",
-                "MoneyBalance", "PaymentDate", "DebtInformLevel", "Disabled", "DisableReason",
-                "DisableDate", "AutoEnable", "AutoEnableDate", "CustomersComment",
-                "CommentForOperator", "CommentForGuard", "MapFileName", "WebLink",
-                "ControlTime", "CTIgnoreSystemEvent", "IsStateArm", "IsStateAlarm",
-                "IsStatePartArm", "StateArmDisArmDateTime"
-            ]
+        await ListObjects.bulk_create(
+            objects
         )
 
-        return {"inserted_or_updated": len(objects), "ids": ids}
+
+    
+
+    async def getSiteEvents(self, id:str):
+        # Получить список ответственных лиц объекта тут будет подставлять ID
+        response = await self.client.get("/api/SiteEvents?id="+id, headers={"apiKey": settings.cnord.CNORD_API_KEY})
+        
+        data = response.json() 
+        # print(data)
+        
+        # return False
+        objects = []
+        for item in data:
+            try:
+                objects.append(ListEvents(**item))
+            except Exception as err:
+                print(f"Ошибка в строк {item}", err)
+
+        await ListEvents.bulk_create(
+            objects
+        )
+            
+
 
 
     async def write_customers(self, site_id: str):

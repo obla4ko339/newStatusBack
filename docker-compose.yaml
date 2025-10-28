@@ -9,6 +9,7 @@ services:
     command: bash -c "service ssh start && ls -a && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 3"
     ports:
       - "8000:8000"
+      - "8001:8001"
     networks:
       - app-network
     volumes:
@@ -36,7 +37,7 @@ services:
       - app-network
 
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:9.6
     env_file:
       - ./.env
     container_name: pgadmin
@@ -46,6 +47,6 @@ services:
       - ./servers.json/:/pgadmin4/servers.json
     networks:
       - app-network
-networks:
+networks: 
   app-network:
     driver: bridge
