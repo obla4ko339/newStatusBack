@@ -8,6 +8,7 @@ from src.core.settings import settings
 from datetime import datetime, timezone
 from src.services.cnord import CnordClient
 from fastapi import APIRouter, HTTPException
+from src.crud.get_events_sites import get_all_events__filter
 
 class SiteEvents(CnordClient):
     def __init__(self):
@@ -45,4 +46,20 @@ class SiteEvents(CnordClient):
                 status_code=404, 
                 detail=f"Item not found {error}"
             ) 
-        
+    
+
+    # получить события исходя из полученных параметров, фильтры
+    async def getSiteEventsParamsBD(self, filter:object, id:int):
+        # print(filter)
+        try:
+            print(filter)
+            print(id)
+            data = await get_all_events__filter(id, filter)
+            # print(data)
+            return data
+
+        except Exception as error:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Item not found {error}"
+            ) 

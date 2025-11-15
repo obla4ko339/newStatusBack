@@ -12,6 +12,9 @@ dependencies = [
     "httpx>=0.28.1",
     "pydantic-settings>=2.9.1",
     "tomlkit>=0.13.3",
+    "PyJWT",
+    "aiohttp",
+    "sqlalchemy",
     "tortoise-orm>=0.25.1",
     "uvicorn>=0.34.3",
 ]

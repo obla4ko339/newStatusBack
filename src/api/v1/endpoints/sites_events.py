@@ -29,14 +29,15 @@ async def get_sites_events_id(request:SiteRequest):
 
 class SiteRequestFilter(BaseModel):
     filter: object
-    Id: str
+    Id: int
 @router.post("/params")
 async def get_sites_events_params(request:SiteRequestFilter):
     try:
         print(request.filter)
         Id = request.Id 
         sites = SiteEvents()
-        data = await sites.getSiteEventsParams(request.filter, Id)
+        # data = await sites.getSiteEventsParams(request.filter, Id)
+        data = await sites.getSiteEventsParamsBD(request.filter, Id)
         return data
     except Exception as error:
         raise HTTPException(

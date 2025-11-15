@@ -11,11 +11,15 @@ TORTOISE_ORM = {
             "models": [
                 "src.models.list_events",
                 "src.models.list_objects",
-                "src.models.customers",
-                "src.models.serure_objects", 
+                "src.models.customers", 
+                "src.models.serure_objects",
+                "src.models.user", 
+                "src.models.surgard_event", 
                 "aerich.models"
                 ],
             "default_connection": "default"
         }
-    }
+    },
+    "use_tz": True,
+    "timezone": "UTC",
 }

@@ -1,0 +1,33 @@
+nohup: ввод игнорируется
+INFO:     Will watch for changes in these directories: ['/home/appst/project']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [787319] using StatReload
+INFO:     Started server process [787321]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+DB Connection String: postgres://postgres:postgres@172.18.0.4:5432/quiz_app
+INFO:     127.0.0.1:37538 - "HEAD / HTTP/1.1" 405 Method Not Allowed
+INFO:     172.25.0.77:0 - "POST /api/v1/auth/login HTTP/1.0" 200 OK
+INFO:     172.25.0.77:0 - "POST /api/v1/auth/login HTTP/1.0" 200 OK
+INFO:     172.25.0.77:60243 - "OPTIONS /api/v1/sites/sitesfilter HTTP/1.1" 200 OK
+{'Name': '7'}
+{'Name': '7'}
+{'apiKey': '492554625', 'Content-Type': 'application/json'}
+[{'RowNumber': 1, 'Id': 'ea5da272-133f-4350-9188-321c2719449d', 'AccountNumber': 6, 'CloudObjectID': 8, 'Name': 'Тестовый обект 777', 'Address': '', 'Phone1': '', 'Phone2': '', 'TypeName': 'Офис', 'IsFire': False, 'IsArm': False, 'IsPanic': False, 'DeviceTypeName': 'cnord-gsm-cml', 'EventTemplateName': 'Си-Норд GSM', 'ContractNumber': '', 'ContractPrice': 0.0, 'MoneyBalance': 0.0, 'PaymentDate': '1899-12-30T00:00:00', 'DebtInformLevel': -1, 'ObjectPassword': '', 'Disabled': False, 'DisableReason': 0, 'DisableDate': '1899-12-30T00:00:00', 'AutoEnable': False, 'AutoEnableDate': '1899-12-30T00:00:00', 'ControlTime': 0, 'CustomersComment': None, 'CommentForOperator': None, 'CommentForGuard': None, 'MapFileName': None, 'WebLink': None, 'CTIgnoreSystemEvent': True, 'IsStateArm': False, 'IsStateAlarm': True, 'IsStatePartArm': False, 'StateArmDisArmDateTime': '2025-10-30T12:53:47.44', 'IsContractPriceForceUpdate': False, 'IsMoneyBalanceForceUpdate': False, 'IsPaymentDateForceUpdate': False}]
+[{'RowNumber': 1, 'Id': 'ea5da272-133f-4350-9188-321c2719449d', 'AccountNumber': 6, 'CloudObjectID': 8, 'Name': 'Тестовый обект 777', 'Address': '', 'Phone1': '', 'Phone2': '', 'TypeName': 'Офис', 'IsFire': False, 'IsArm': False, 'IsPanic': False, 'DeviceTypeName': 'cnord-gsm-cml', 'EventTemplateName': 'Си-Норд GSM', 'ContractNumber': '', 'ContractPrice': 0.0, 'MoneyBalance': 0.0, 'PaymentDate': '1899-12-30T00:00:00', 'DebtInformLevel': -1, 'ObjectPassword': '', 'Disabled': False, 'DisableReason': 0, 'DisableDate': '1899-12-30T00:00:00', 'AutoEnable': False, 'AutoEnableDate': '1899-12-30T00:00:00', 'ControlTime': 0, 'CustomersComment': None, 'CommentForOperator': None, 'CommentForGuard': None, 'MapFileName': None, 'WebLink': None, 'CTIgnoreSystemEvent': True, 'IsStateArm': False, 'IsStateAlarm': True, 'IsStatePartArm': False, 'StateArmDisArmDateTime': '2025-10-30T12:53:47.44', 'IsContractPriceForceUpdate': False, 'IsMoneyBalanceForceUpdate': False, 'IsPaymentDateForceUpdate': False}]
+INFO:     172.25.0.77:60248 - "POST /api/v1/sites/sitesfilter HTTP/1.1" 200 OK
+INFO:     172.25.0.77:60248 - "OPTIONS /api/v1/sites_events/params HTTP/1.1" 200 OK
+{'ectAlarm': True, 'ectReset': True, 'ectFault': True, 'ectRestore': True, 'ectArm': True, 'ectDisarm': True, 'ectBypass': True, 'ectWarning': True, 'ectOther': True, 'ectTest': False, 'duplicateEvent': False, 'startDate': '2025-10-30', 'stopDate': '2025-11-04'}
+INFO:     172.25.0.77:60267 - "POST /api/v1/sites_events/params HTTP/1.1" 200 OK
+INFO:     172.25.0.77:60267 - "OPTIONS /api/v1/sites/info HTTP/1.1" 200 OK
+INFO:     172.25.0.77:60272 - "POST /api/v1/sites/info HTTP/1.1" 200 OK
+DATA!!!
+INFO:     172.25.0.77:51022 - "GET / HTTP/1.1" 200 OK
+INFO:     172.25.0.77:51022 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+DATA!!!
+INFO:     172.25.0.77:51106 - "GET / HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [787321]
+INFO:     Stopping reloader process [787319]

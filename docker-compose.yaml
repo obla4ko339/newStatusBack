@@ -14,6 +14,12 @@ services:
       - app-network
     volumes:
       - .:/srv/app
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres     # <-- ВАЖНО: использовать имя контейнера PostgreSQL
+    depends_on:
+      - postgres
 
   # cache:
   #   image: redis:latest
@@ -22,20 +28,40 @@ services:
   #     - "6379:6379"
   #   networks:
   #     - app-network
+  surguard-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile.surguard
+    container_name: surguard-listener
+    network_mode: "host"
+    # ports:
+      # - "5000:5000"
+    depends_on:
+      - backend
+    environment:
+      # - API_URL=http://backend:8000  # адрес куда слать HTTP POST
+      - API_URL=http://127.0.0.1:8000  # адрес куда слать HTTP POST
+    volumes:
+      - .:/srv/app                
+    working_dir: /srv/app
+    command: >
+      sh -c "python3 -u src/surguard_listener.py" 
 
   postgres:
     image: postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /data/postgres
+      # PGDATA: /data/postgres
       POSTGRES_DB: ${POSTGRES_DB}
     container_name: postgres
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data/
+      # - ./postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data  
     networks:
       - app-network
 
+  
   pgadmin:
     image: dpage/pgadmin4:9.6
     env_file:
@@ -45,8 +71,13 @@ services:
       - 5050:80
     volumes:
       - ./servers.json/:/pgadmin4/servers.json
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - app-network
 networks: 
   app-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
