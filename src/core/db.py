@@ -14,7 +14,9 @@ TORTOISE_ORM = {
                 "src.models.customers", 
                 "src.models.serure_objects",
                 "src.models.user", 
+                "src.models.sites_user", 
                 "src.models.surgard_event", 
+                "src.models.sites", 
                 "aerich.models"
                 ],
             "default_connection": "default"

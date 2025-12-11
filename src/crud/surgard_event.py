@@ -18,7 +18,7 @@ from src.schemas.surgard_event import SurgardEventCreate
 from datetime import datetime
 
 async def create_surgard_event(data: SurgardEventCreate):
-    print(f"Creating SurgardEvent with data: {data}")
+    # print(f"Creating SurgardEvent with data: {data}")
     try:
         event_data = data.dict() if hasattr(data, "dict") else data
 
@@ -34,7 +34,7 @@ async def create_surgard_event(data: SurgardEventCreate):
             await session.commit()
             await session.refresh(event)
 
-        print(f"✅ SurgardEvent created with ID: {event.id}")
+        # print(f"✅ SurgardEvent created with ID: {event.id}")
         return event
 
     except Exception as e:

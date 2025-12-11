@@ -50,7 +50,7 @@ def parse_surgard(message: str):
             dt = datetime.strptime(ts, "%H:%M:%S-%d/%m")
             # Добавляем год БЕЗ часового пояса
             dt = dt.replace(year=datetime.now().year)
-            print(f"просто дата {dt}")
+            # print(f"просто дата {dt}")
         except Exception:
             dt = None
 
@@ -77,11 +77,11 @@ async def get_objects(event: SurguardEvent):
     """
     Получить список всех объектов
     """
-    print(event)
+    # print(event)
     try:
-        print(f"📨 Получено от listener: {event.surgard}")  # логируем то, что пришло
+        # print(f"📨 Получено от listener: {event.surgard}")  # логируем то, что пришло
         parsed = parse_surgard(event.surgard)
-        print(f"🔍 Распарсено: {parsed}")  # логируем расп
+        # print(f"🔍 Распарсено: {parsed}")  # логируем расп
 
         obj = await create_surgard_event(SurgardEventCreate(**parsed))
 

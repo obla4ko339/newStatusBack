@@ -15,12 +15,14 @@ class Sites(CnordClient):
         
         
 
-    async def getSite(self, data):
-        if not data:
-            return False
+    # async def getSite(self, data):
+    async def getSite(self):
+        # if not data:
+        #     return False
         try:
             response = await self.client.get("/api/Sites",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
             data = response.json()
+            print(data)
             return data
         except Exception as error:
             return error
@@ -102,6 +104,7 @@ class Sites(CnordClient):
     
     # Получить объект по номеру или идентификатору
     async def getSitesID(self, id:str):
+        print(id)
         try:
             response = await self.client.get(f"/api/Sites?id={id}",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
             data = response.json()

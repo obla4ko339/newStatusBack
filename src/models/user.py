@@ -9,6 +9,10 @@ class User(models.Model):
     is_active = fields.BooleanField(default=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
+    group_user = fields.IntField(null=False)
+    email = fields.CharField(max_length=100)
+    tel = fields.CharField(max_length=50)
+    parent = fields.IntField(null=True)
 
     class Meta:
         table = "users"

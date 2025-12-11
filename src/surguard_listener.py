@@ -11,24 +11,24 @@ async def send_event_to_server(data: str):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(API_URL, json={"surgard": data}) as resp:
-                print(f"📤 Отправлено на {API_URL}, статус: {resp.status}")
+                # print(f"📤 Отправлено на {API_URL}, статус: {resp.status}")
         except Exception as e:
             print(f"⚠ Ошибка при отправке: {e}")
 
 
 async def handle_client(reader, writer):
     addr = writer.get_extra_info("peername")
-    print(f"📡 Подключение от {addr}")
+    # print(f"📡 Подключение от {addr}")
 
     try:
         while True:
             data = await reader.read(1024)
             if not data:
-                print(f"🔌 Соединение закрыто: {addr}")
+                # print(f"🔌 Соединение закрыто: {addr}")
                 break
 
             # Лог сырых байт
-            print(f"📨 RAW: {data!r}")
+            # print(f"📨 RAW: {data!r}")
 
             # Пробуем декодировать в текст
             try:
@@ -36,12 +36,12 @@ async def handle_client(reader, writer):
             except UnicodeDecodeError:
                 message = "<не удалось декодировать>"
 
-            print(f"📨 Получено от {addr}: {message}")
+            # print(f"📨 Получено от {addr}: {message}")
 
             # Отправляем ACK (обязательно!)
             writer.write(b"\x06")
             await writer.drain()
-            print(f"✅ Отправлен ACK -> {addr}")
+            # print(f"✅ Отправлен ACK -> {addr}")
 
             # Асинхронно отправляем данные в backend
             asyncio.create_task(send_event_to_server(message))
@@ -56,7 +56,7 @@ async def handle_client(reader, writer):
 async def main():
     server = await asyncio.start_server(handle_client, HOST, PORT)
     addr = server.sockets[0].getsockname()
-    print(f"🚀 Sur-Gard listener запущен на {addr}")
+    # print(f"🚀 Sur-Gard listener запущен на {addr}")
 
     async with server:
         await server.serve_forever()
