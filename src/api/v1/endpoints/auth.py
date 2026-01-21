@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import jwt
 from src.models.user import User, User_Pydantic
 from src.crud.auth import crud_create_user
-from src.crud.auth import crud_get_list_user
+from src.crud.auth import crud_get_list_user,delUser
 from src.schemas.user import CreateUser
 from fastapi import Request
 
@@ -56,6 +56,23 @@ async def create_user(data:CreateUser):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail = error
         )
+
+
+
+# DELETE START
+class UserDel(BaseModel):
+    id:int
+@router.post("/user/del")
+async def user_del(data:UserDel):
+    print(data)
+    print(data.id)
+    if data:
+        resultDel = await delUser(data.id)
+        return resultDel
+    else:
+        return False
+
+# DELETE END
 
 
 
@@ -140,7 +157,7 @@ async def get_current_user(token:str):
     except jwt.PyJWTError:
         raise credentials_exception
     
-    try:
+    try: 
         user = await User.get(username=username)
         # user = await User.filter(username=username).first()
     except DoesNotExist:
@@ -198,4 +215,15 @@ async def get_list_user(request:Request):
         data = await crud_get_list_user(userID, userGroup)
         return data
     
-
+@router.post("/user/get_current_user_info")
+async def get_current_user_info(request:Request):
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split("Bearer ")[1]
+        user = await get_current_user(token)
+        user_info = {}
+        if user is not None:
+            user_info = {"tel":user.tel, "email":user.email, "username":user.username}
+            return user_info
+        else:
+            return user_info
