@@ -13,3 +13,22 @@ class CreateUser(BaseModel):
     username: str
     is_active: bool
     parent:int
+
+
+
+
+class RegUser(BaseModel):
+    email:str
+    password: str
+    confirm: str
+    tel:str
+    username: str
+
+
+class CodeEmail(BaseModel):
+    email:str
+
+
+class VerificationData(BaseModel):
+    email:str
+    code:str

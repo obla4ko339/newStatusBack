@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from src.models.user import User
 from src.models.sites_user import SitesUser
 from src.models.sites import Sites
+from src.models.customers import Customer
 from src.schemas.surgard_event import SurgardEventCreate
 from src.schemas.user import CreateUser
 from src.schemas.sites import SitesCreate
@@ -24,6 +25,8 @@ from typing import Dict, Any
 from pydantic import BaseModel
 from tortoise.exceptions import IntegrityError
 from src.crud.sites_of_user import crud_get_list_all
+
+from src.services.sites import Sites as SitesObj
 
 
 
@@ -98,6 +101,84 @@ async def crud_get_sites_user_id(data:object):
         return error  
 # вывести объеты по определенному ползователю и группе END
     
+
+
+###############################################################
+# через таймер идет запрос на получение новых объектов 
+# async def cron_create_sites(data:SitesCreate):
+#     try:
+#         sites = data
+#         # print(f"RESULT cron_create_sites--> {sites}")
+#         list_sites = []
+#         for site in sites:
+#             obj = Sites(**site)
+#             list_sites.append(obj)
+
+#         if list_sites is not None:
+#             await Sites.bulk_create(list_sites, ignore_conflicts=True)
+#             print(f"Успешно записано {len(list_sites)} объектов")
+    
+#     except Exception as error:
+#         print(f"ERROR cron_create_sites {error}")
+#         return error
+###############################################################
+
+
+###############################################################
+# через таймер идет запрос на получение новых объектов 
+async def cron_create_sites(data:SitesCreate):
+    try:
+        sites = data
+        list_sites = []
+        for site in sites:
+            accountNumber = site.get("AccountNumber")
+            if not accountNumber:
+                continue
+
+            create = await Sites.update_or_create(
+                AccountNumber = accountNumber,
+                defaults = site
+            )
+    except Exception as error:
+        print(f"ERROR cron_create_sites {error}")
+        return error
+###############################################################
+
+
+###############################################################
+# через таймер добавляем обновляем ответстенных  
+async def cron_create_update_customers():
+    try:
+        listSites = await Sites.all().values()
+        site = SitesObj()
+        for item in listSites:
+            customers_obj = await site.getCustomersID(item.get('Id'))
+            
+            if not customers_obj:
+                continue
+
+            for custom in customers_obj:
+                Id = custom.get('Id')
+                if not Id:
+                    continue
+                custom['sitesId'] = item.get('Id')
+
+                create = await Customer.update_or_create(
+                    Id = Id,
+                    defaults = custom
+                )
+
+            
+
+            
+
+
+    except Exception as error:
+        print(f"ERROR cron_create_update_customers {error}")
+        return error
+    
+
+###############################################################
 
 
 

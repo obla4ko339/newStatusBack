@@ -18,7 +18,9 @@ class Customer(models.Model):
     ReclosingRequest = fields.BooleanField(default=False)
     ReclosingFailure = fields.BooleanField(default=False)
     PINCode = fields.CharField(max_length=50)
-    LastSync = fields.DatetimeField(auto_now=True)
+    sitesId = fields.CharField(max_length=100)
+
+    # LastSync = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = "customers"

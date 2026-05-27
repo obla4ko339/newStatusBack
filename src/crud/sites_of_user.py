@@ -22,6 +22,20 @@ from datetime import datetime
 from typing import Dict, Any, List
 from pydantic import BaseModel
 
+# ======================================================
+# присвоение зарегистрированному пользователю объеткы, если есть
+async def create_site_of_user_reg(number:List, idUser:int):
+    if not number and not idUser:
+        return False
+    try:
+        for item in number:
+            result = await SitesUser.create(user_id=idUser, site_id=item)
+        return result
+    except Exception as error:
+        print(f"create_site_of_user_reg--> {error}")
+        return error
+# ======================================================
+
 
 class sitesUser(BaseModel):
     user_id:int
@@ -82,3 +96,6 @@ async def crud_del_su(data:SiteDelRequest):
     except Exception as error:
         print(error)
         return error
+
+
+

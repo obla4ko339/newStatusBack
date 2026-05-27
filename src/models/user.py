@@ -10,8 +10,8 @@ class User(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
     group_user = fields.IntField(null=False)
-    email = fields.CharField(max_length=100)
-    tel = fields.CharField(max_length=50)
+    email = fields.CharField(max_length=100, unique=True)
+    tel = fields.CharField(max_length=50, unique=True)
     parent = fields.IntField(null=True)
 
     class Meta:

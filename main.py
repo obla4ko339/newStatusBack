@@ -13,10 +13,27 @@ from src.services.siteEvents import SiteEvents
 from src.services.events import Events
 from src.services.siteSchedule import SiteSchedule
 from src.services.customers import Customers
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
 from fastapi.middleware.cors import CORSMiddleware
+
+from src.crud.sites import cron_create_sites, cron_create_update_customers
+
+
+# ПОЧТА отправки сообщения
+from src.services.mail import MailNewStatus
+
+
+# ENV
+import os
+
+
+
+# testMail = MailNewStatus(os.getenv("HOST"), os.getenv("PORT"), os.getenv("USER"), os.getenv("PASSWORD"))
+# testMail.send_message("volodya.grab@yandex.ru", "NEW STATUS", "TEST MESSAGE")
+
 
 
  
@@ -42,6 +59,31 @@ app.add_middleware(
 )
 
 
+# 03 05 26
+# по таймеру будем загружать и проверять новые объекты START
+async def taskGetSites():
+    try:
+        sites = Sites()
+        listSites = await sites.getSite()
+        # print(f"GET SITES--> { await sites.getSite()}")
+        await cron_create_sites(listSites)
+    except Exception as error:
+        print(f"taskGetSites-->{error}")
+        return error 
+# по таймеру будем загружать и проверять новые объекты END
+
+# по таймеру обновляем добавляем ответственных 
+async def taskCustomers():
+    try:
+        # sites = Sites()
+        await cron_create_update_customers()
+    except Exception as error:
+        print(f"ERROR taskCustomers-->{error}")
+        return error
+# по таймеру обновляем добавляем ответственных 
+# 03 05 26
+
+
 # Выполнение по интервалу START
 app.include_router(router)
 scheduler = AsyncIOScheduler()
@@ -52,9 +94,18 @@ async def my_task():
 @app.on_event("startup")
 async def startup_event():
     scheduler.add_job(my_task, 'interval', seconds=10)
+    # scheduler.add_job(taskGetSites, 'cron', hour=0, minute=0)
+    scheduler.add_job(taskGetSites, 'interval', seconds=43200)  
+    scheduler.add_job(taskCustomers, 'interval', seconds=43200)  
     scheduler.start()
+    
 
 # Выполнение по интервалу START
+
+
+
+
+
 
 
 @app.get("/")

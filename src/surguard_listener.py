@@ -11,7 +11,7 @@ async def send_event_to_server(data: str):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(API_URL, json={"surgard": data}) as resp:
-                # print(f"📤 Отправлено на {API_URL}, статус: {resp.status}")
+                print(f"📤 Отправлено на {API_URL}, статус: {resp.status}")
         except Exception as e:
             print(f"⚠ Ошибка при отправке: {e}")
 

@@ -42,6 +42,22 @@ async def get_sites_info(request:SiteRequest):
     
 
 
+class SiteRequest(BaseModel):
+    id: str
+@router.post("/customers")
+async def get_sites_customers(request:SiteRequest):
+    try:
+        Id = request.id 
+        sites = Sites()
+        data = await sites.getCustomersID(Id)
+        return data
+    except Exception as error:
+        raise HTTPException(
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=f"Произошла ошибка при получении ответственного: {str(error)}"
+    )
+
+
 # вывести объеты по определенному ползователю и группе start
 class SiteFilter(BaseModel):
     user_id: int

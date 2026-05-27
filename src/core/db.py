@@ -18,6 +18,12 @@ TORTOISE_ORM = {
                 "src.models.surgard_event", 
                 "src.models.sites", 
                 "src.models.group_user", 
+                "src.models.loading", 
+                "src.models.logs", 
+                "src.models.verification_codes", 
+                "src.models.notification", 
+                "src.models.notification_type", 
+                "src.models.notification_is_read", 
                 "aerich.models"
                 ],
             "default_connection": "default"

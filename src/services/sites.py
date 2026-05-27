@@ -7,6 +7,7 @@ from src.models.list_events import ListEvents
 from src.core.settings import settings
 from datetime import datetime, timezone
 from src.services.cnord import CnordClient
+from fastapi import APIRouter, HTTPException,status
 
 class Sites(CnordClient):
     def __init__(self):
@@ -169,4 +170,23 @@ class Sites(CnordClient):
             return data
         except Exception as error:
             print(f"getSitesID {error}")
-            
+
+
+
+    # Получить ответственного по id
+    async def getCustomersID(self, id:str):
+        try:
+            response = await self.client.get(f"/api/Customers?siteId={id}",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
+            data = response.json()
+            if not isinstance(data, list):
+                raise HTTPException(
+                    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Произошла ошибка при получении ответственного"
+                )
+            return data
+        except Exception as error:
+            print(f"getCustomersID {error}")
+            return error
+
+
+   

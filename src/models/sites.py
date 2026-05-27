@@ -10,7 +10,7 @@ class Sites(models.Model):
     Name = fields.CharField(max_length=255)
     Address = fields.CharField(max_length=255)
     Phone1 = fields.CharField(max_length=255)
-    Phone2 = fields.CharField(max_length=255)
+    Phone2 = fields.CharField(max_length=255)  
     TypeName = fields.CharField(max_length=255)
     EventTemplateName = fields.CharField(max_length=255)
     
