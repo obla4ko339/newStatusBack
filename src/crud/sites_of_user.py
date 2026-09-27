@@ -27,9 +27,12 @@ from pydantic import BaseModel
 async def create_site_of_user_reg(number:List, idUser:int):
     if not number and not idUser:
         return False
+
+    idUserObject = await User.filter(id=idUser).first()
     try:
         for item in number:
-            result = await SitesUser.create(user_id=idUser, site_id=item)
+            # site_idObject = await Sites.filter(AccountNumber=item).first()
+            result = await SitesUser.create(user_id=idUserObject, site_id=item, active=False)
         return result
     except Exception as error:
         print(f"create_site_of_user_reg--> {error}")
@@ -50,8 +53,10 @@ async def crud_create_site_of_user(data: sitesUser):
         #     site_id=data.object_id 
         # ) 
 
+        user_id = await User.get(id=data.user_id)
+
         result,created = await SitesUser.get_or_create( 
-            user_id=data.user_id,
+            user_id=user_id,
             site_id=data.object_id 
         )
         if created:
@@ -62,7 +67,7 @@ async def crud_create_site_of_user(data: sitesUser):
         
         # return result
     except Exception as error:
-        print(error)
+        print(f"ERROR CREATE SITE OF USER {error}")
         return error   
 
 
@@ -72,6 +77,10 @@ async def crud_get_list_su(user_id:SiteUserRequest):
     # users = await SitesUser.all()
     try:
         if user_id:
+            # если новый пользователь убираем значок или пропускаем
+            await User.filter(id=user_id.user_id,is_check=False).update(is_check=True)
+            # если новый пользователь убираем значок или пропускаем
+
             # result = await SitesUser.filter(user_id=user_id.user_id).all() 
             result = await SitesUser.filter(user_id=user_id.user_id).prefetch_related('site')
             print(result)

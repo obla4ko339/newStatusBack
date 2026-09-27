@@ -6,7 +6,12 @@ import hashlib
 
 class SitesUser(models.Model):
     id = fields.IntField(pk=True)
-    user_id = fields.IntField()
+    # user_id = fields.IntField()
+    user_id = fields.ForeignKeyField(
+        model_name="models.User",
+        related_name="user_objects", 
+        source_field="user_id" 
+    )
     # object_id = fields.IntField()
     # create = fields.DatetimeField(auto_now_add=True)
     active = fields.BooleanField(default=True)

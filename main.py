@@ -29,6 +29,9 @@ from src.services.mail import MailNewStatus
 # ENV
 import os
 
+# REDIS
+from src.core.redis import redis_container
+
 
 
 # testMail = MailNewStatus(os.getenv("HOST"), os.getenv("PORT"), os.getenv("USER"), os.getenv("PASSWORD"))
@@ -57,6 +60,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"], 
 )
+
+# ======================
+# REDIS
+redis_container.init("redis://cache:6379")
+print("--- Redis успешно инициализирован ---")
+# ======================
 
 
 # 03 05 26

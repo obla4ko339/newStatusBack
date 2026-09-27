@@ -64,7 +64,7 @@ async def crud_is_read_message(list_message:list):
                 )
 
 
-async def crud_get_in_message(user_id:int):
+async def crud_get_in_message__old(user_id:int):
     if id:
         try:
             message = await NotificationIsRead.filter(user_id=user_id).prefetch_related("message_id").order_by("-message_id__create_at")
@@ -80,6 +80,59 @@ async def crud_get_in_message(user_id:int):
                     detail=f'Сообщений нет Ошибка {error}'
                 )
 
+
+async def crud_get_in_message(user_id: int):
+    if not user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Не указан user_id"
+        )
+    
+    try:
+        # 1. Получаем все уведомления
+        messages = await NotificationIsRead.filter(
+            user_id=user_id
+        ).prefetch_related(
+            "message_id"
+        ).order_by("-message_id__create_at")
+        
+
+        if not messages:
+            return []  
+        
+        # 3. Получаем всех отправителей одним запросом
+        sender_ids = list({m.message_id.user_id_from for m in messages})
+        senders = {u.id: u for u in await User.filter(id__in=sender_ids)}
+        
+        # 4. Формируем результат
+        result = []
+        for item in messages:
+            notif = item.message_id
+            sender = senders.get(notif.user_id_from)
+            
+            result.append({
+                "id": item.id,
+                "message": notif.message,
+                "create_at": notif.create_at.isoformat() if notif.create_at else None,
+                "is_read": item.is_read,
+                "user_id_from": notif.user_id_from,
+                "sender_name": sender.username if sender else "Неизвестный",
+                "sender_full_name": (
+                    f"{sender.name_first or ''} {sender.name_last or ''}".strip()
+                    if sender else None
+                ),
+            })
+        
+        return result
+        
+    except Exception as error:
+        print(f"Error in crud_get_in_message: {error}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка получения сообщений: {str(error)}"
+        )
 
 async def crud_get_message(id:int):
     if id:

@@ -11,11 +11,13 @@ from src.crud.auth import crud_create_user,crud_create_user_reg,get_user_email
 from src.crud.auth import crud_get_list_user,delUser
 from src.crud.logs import logs_create, log_event
 from src.crud.message import crud_create_message,crud_get_message,crud_get_in_message,crud_is_read_message,crud_check_is_read_message
-from src.crud.bd import create_access_token,get_current_user
+from src.crud.bd import create_access_token,get_current_user,getUserRequestToken,checkPermission
 from src.schemas.user import CreateUser,RegUser,CodeEmail,VerificationData
 from src.schemas.logs import SchemaLogsCreate
 from src.schemas.notification import CreateMessage,DataMessageApi,IsReadMessageApi,IsReadMessageApiId
 from fastapi import Request
+
+
 
 
 # ПОЧТА отправки сообщения
@@ -75,13 +77,21 @@ async def is_read_message(data:IsReadMessageApi, request:Request):
 @router.get("/get_in_message")
 async def get_in_message(request:Request):
     try:
-        auth_header = request.headers.get("Authorization") 
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split("Bearer ")[1]
-            user = await get_current_user(token)
+        # auth_header = request.headers.get("Authorization") 
+        # if auth_header and auth_header.startswith("Bearer "):
+        #     token = auth_header.split("Bearer ")[1]
+        #     user = await get_current_user(token)
 
-            if user:
-                return await crud_get_in_message(user.id)
+            infoUsers = await getUserRequestToken(request)
+            if not infoUsers:
+                return False
+
+            # CHECK PERMISSION
+            await checkPermission(infoUsers.group_user_id, "message.view_incoming")
+            # CHECK PERMISSION
+
+            print(infoUsers.id)
+            return await crud_get_in_message(infoUsers.id)
 
     except Exception as error:
         raise HTTPException(
@@ -93,19 +103,28 @@ async def get_in_message(request:Request):
 @router.get("/get_out_message")
 async def get_out_message(request:Request):
     try:
-        auth_header = request.headers.get("Authorization") 
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split("Bearer ")[1]
-            user = await get_current_user(token)
+        # auth_header = request.headers.get("Authorization") 
+        # if auth_header and auth_header.startswith("Bearer "):
+        #     token = auth_header.split("Bearer ")[1]
+        #     user = await get_current_user(token)
 
-            if user:
-                return await crud_get_message(user.id)
+        infoUsers = await getUserRequestToken(request)
+        if not infoUsers:
+            return False
 
+        # CHECK PERMISSION
+        await checkPermission(infoUsers.group_user_id, "message.view_outgoing")
+        # CHECK PERMISSION
+
+        return await crud_get_message(infoUsers.id)
+    except HTTPException:
+        raise
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = error
+            detail = f"{error}"
         )
+
 
 
 
@@ -128,6 +147,6 @@ async def create_message(data:DataMessageApi,request:Request):
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = error
+            detail = f"{error}"
         )
 

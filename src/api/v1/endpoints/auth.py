@@ -8,13 +8,19 @@ from src.models.user import User, User_Pydantic
 from src.models.logs import Logs
 from src.models.verification_codes import VerificationCode
 from src.crud.auth import crud_create_user,crud_create_user_reg,get_user_email
-from src.crud.auth import crud_get_list_user,delUser,crud_get_list_user_ids
+from src.crud.auth import crud_get_list_user,delUser,crud_get_list_user_ids,crud_get_list_user_su,updateUser,isActive
 from src.crud.logs import logs_create, log_event
-from src.crud.bd import create_access_token,get_current_user
-from src.schemas.user import CreateUser,RegUser,CodeEmail,VerificationData
+from src.crud.bd import create_access_token,get_current_user,checkPermission
+from src.schemas.user import CreateUser,RegUser,CodeEmail,VerificationData,ListUserForPage,UpdateUser,IsActive
 from src.schemas.logs import SchemaLogsCreate
 from fastapi import Request
 from typing import List
+from fastapi import Response
+from src.crud.bd import getUserRequestToken
+# REDIS
+from src.core.redis import redis_container
+import json
+from pydantic_core import to_jsonable_python 
 
 
 # ПОЧТА отправки сообщения
@@ -67,6 +73,14 @@ class getUserCurrent(BaseModel):
 @log_event(type="user", section="create")
 async def create_user(data:CreateUser,request:Request):
     try:
+        infoUsers = await getUserRequestToken(request)
+        if not infoUsers:
+            return False
+
+        # CHECK PERMISSION
+        permission = await checkPermission(infoUsers.group_user_id, "user.create")
+        # CHECK PERMISSION
+
         # password = create_access_token_new(data.password)
         password = User.hash_password(data.password)
         result = await crud_create_user(data, password)
@@ -74,7 +88,7 @@ async def create_user(data:CreateUser,request:Request):
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = error
+            detail = f"{error}"
         )
 
 #  Registration
@@ -102,6 +116,12 @@ class UserDel(BaseModel):
 @router.post("/user/del")
 @log_event(type="user", section="del")
 async def user_del(data:UserDel,request:Request):
+    infoUsers = await getUserRequestToken(request)
+    if not infoUsers:
+        return False
+    # CHECK PERMISSION
+    await checkPermission(infoUsers.group_user_id, "user.delete")
+    # CHECK PERMISSION
     if data:
         resultDel = await delUser(data.id)
         return resultDel
@@ -167,7 +187,7 @@ async def get_user_current(data:getUserCurrent, request:Request):
             token_type="bearer",
             username=user.username,
             id=user.id,
-            group_user=user.group_user, 
+            group_user=user.group_user_id, 
             expires_in=ACCESS_TOKEN_EXPIRE_MINUTES
         )
         
@@ -247,7 +267,23 @@ async def logout(request:Request):
 
 @router.post("/user/get_list_user")
 @log_event(type="user", section="get_list_user")
-async def get_list_user(request:Request):
+async def get_list_user(pages:ListUserForPage, request:Request):
+    # print(f"REDIS {redis_container.client}")
+    infoUsers = await getUserRequestToken(request)
+    if not infoUsers:
+        return False
+    # CHECK PERMISSION
+    await checkPermission(infoUsers.group_user_id, "user.view")
+    # CHECK PERMISSION
+    # REDIS
+    redis_client = redis_container.client
+    cache_data_list_user = await redis_client.get("list_user")
+    if cache_data_list_user:
+        print(f"ПОЛУЧАЕМ REDIS {cache_data_list_user}")
+        # return json.loads(cache_data_list_user)
+        return Response(content=cache_data_list_user, media_type="application/json")
+    # REDIS
+
     auth_header = request.headers.get("Authorization")
     # print(auth_header)
     if auth_header and auth_header.startswith("Bearer "):
@@ -256,8 +292,16 @@ async def get_list_user(request:Request):
         # print(f"Current user: {user.id}")
         # print(token)
         userID = user.id
-        userGroup = user.group_user
-        data = await crud_get_list_user(userID, userGroup)
+        userGroup = user.group_user_id
+        # print(user.group_user_id)
+        if userGroup == 1:
+            data = await crud_get_list_user_su(pages)
+        else:
+            data = await crud_get_list_user(pages, userID, userGroup)
+        # REDIS
+        # json_compatible_data = to_jsonable_python(data)
+        # await redis_client.set("list_user", data, ex=3600 ) # 1 час
+        # REDIS
         return data
 
 
@@ -301,17 +345,31 @@ async def get_list_user_ids(data:UserIdsRequest,request:Request):
 @router.post("/user/get_current_user_info")
 # @log_event(type="user", section="get_current_user_info")
 async def get_current_user_info(request:Request):
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split("Bearer ")[1]
-        user = await get_current_user(token)
-        user_info = {}
+    try:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split("Bearer ")[1]
+            user = await get_current_user(token)
+            user_info = {}
 
-        if user is not None:
-            user_info = {"tel":user.tel, "email":user.email, "username":user.username}
-            return user_info
-        else:
-            return user_info
+            if user is not None:
+                user_info = {
+                    "tel":user.tel, 
+                    "email":user.email, 
+                    "username":user.username, 
+                    "name_first":user.name_first,
+                    "name_last":user.name_last,
+                    "name_patronymic":user.name_patronymic,
+                    }
+                return user_info
+            else:
+                return user_info
+    except Exception as error:
+        print( f'ERROR get_current_user_info {error}' )
+        raise HTTPException(
+            status_code=500,
+            detail = f"{error}"
+        )
 #  Постоянно срабатывает после  перезагрузки страницы
 ###########################################################################################
 
@@ -402,7 +460,7 @@ async def verification_code_email(data:VerificationData, request:Request):
                 token_type="bearer",
                 username=user.username,
                 id=user.id,
-                group_user=user.group_user, 
+                group_user=user.group_user_id, 
                 expires_in=ACCESS_TOKEN_EXPIRE_MINUTES
             )
         return user
@@ -411,3 +469,54 @@ async def verification_code_email(data:VerificationData, request:Request):
 # ПОЛУЧЕНИЕ И ПРОВЕРКА КОДА
 # ВЕРИФИКАЦИЯ ЧЕРЕЗ ПОЧТУ 
 ###########################################################################################
+
+
+
+# обновление данных пользователя
+@router.post("/user/update_user")
+# @log_event(type="user", section="get_list_user")
+async def update_user(user:UpdateUser, request:Request):
+    try:
+        infoUsers = await getUserRequestToken(request)
+        if not infoUsers:
+            return {"error":1}
+        userNew = dict(user)
+        print(userNew)
+
+        if userNew['password'] is not None:
+            password = User.hash_password(userNew['password'])
+            userNew['password_hash'] = password
+            userNew.pop("password", None)
+
+        if userNew.get('password', None) is None:
+            userNew.pop("password", None)
+
+        result = await updateUser(userNew)
+        return result
+
+    except Exception as err:
+        return {"error":f"Ошибка обновления пользователя {err}"}
+
+
+        
+
+# включение и отключение активности пользователя
+@router.post("/user/is_active")
+async def is_active(data:IsActive, request:Request):
+    try:
+        infoUsers = await getUserRequestToken(request)
+        if not infoUsers:
+            return {"error":1}
+
+        result = await isActive(data)
+        return result
+         
+
+    except Exception as err:
+        # return {"error":f"Ошибка active user {err}"}
+        raise HTTPException(
+            status_code=500,
+            detail = f"Ошибка active user {err}"
+        )
+
+        

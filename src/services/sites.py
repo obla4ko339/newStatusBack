@@ -151,7 +151,6 @@ class Sites(CnordClient):
     
     # Создать объект (POST /api/Sites)
     async def setSites(self, name:object):
-        print(name)
         # return False
         try:
             response = await self.client.post(f"/api/Sites",headers={"apiKey": settings.cnord.CNORD_API_KEY}, data={"Name":name.get('nameSites')})
@@ -188,5 +187,24 @@ class Sites(CnordClient):
             print(f"getCustomersID {error}")
             return error
 
+
+    # Взять объект под охрану (POST /api/Sites/Arm)
+    async def isArmSiteApi(self, id:str):
+        try:
+            response = await self.client.post(f"/api/Sites/Arm?id={id}",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
+            data = response.json()
+            return data
+        except Exception as error:
+            print(f"getParts {error}")
+
+
+    # Снять объект с охраны (POST /api/Sites/Disarm)
+    async def disArmSiteApi(self, id:str):
+        try:
+            response = await self.client.post(f"/api/Sites/Disarm?id={id}",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
+            data = response.json()
+            return data
+        except Exception as error:
+            print(f"getParts {error}")
 
    

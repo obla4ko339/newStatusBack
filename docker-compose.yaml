@@ -1,83 +1,87 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: status-new-backend
-    command: bash -c "service ssh start && ls -a && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 3"
-    ports:
-      - "8000:8000"
-      - "8001:8001"
-    networks:
-      - app-network
-    volumes:
-      - .:/srv/app
-    env_file:
-      - .env
-    environment:
-      - DB_HOST=postgres     # <-- ВАЖНО: использовать имя контейнера PostgreSQL
-    depends_on:
-      - postgres
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: status-new-backend
+        command: bash -c "service ssh start && ls -a && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 3"
+        ports:
+            - '8000:8000'
+            - '8001:8001'
+        networks:
+            - app-network
+        volumes:
+            - .:/srv/app
+        env_file:
+            - .env
+        environment:
+            - DB_HOST=postgres # <-- ВАЖНО: использовать имя контейнера PostgreSQL
+        depends_on:
+            - postgres
+            - cache
 
-  # cache:
-  #   image: redis:latest
-  #   container_name: quiz-app-cache
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - app-network
-  surguard-listener:
-    build:
-      context: .
-      dockerfile: Dockerfile.surguard
-    container_name: surguard-listener
-    network_mode: "host"
-    # ports:
-      # - "5000:5000"
-    depends_on:
-      - backend
-    environment:
-      # - API_URL=http://backend:8000  # адрес куда слать HTTP POST
-      - API_URL=http://127.0.0.1:8000  # адрес куда слать HTTP POST
-    volumes:
-      - .:/srv/app                
-    working_dir: /srv/app
-    command: >
-      sh -c "python3 -u src/surguard_listener.py" 
+    cache:
+        image: redis:7-alpine
+        container_name: quiz-app-cache
+        restart: always
+        ports:
+            - '6379:6379'
+        networks:
+            - app-network
+        volumes:
+            - redis_data:/data
+    surguard-listener:
+        build:
+            context: .
+            dockerfile: Dockerfile.surguard
+        container_name: surguard-listener
+        network_mode: 'host'
+        # ports:
+        # - "5000:5000"
+        depends_on:
+            - backend
+        environment:
+            # - API_URL=http://backend:8000  # адрес куда слать HTTP POST
+            - API_URL=http://127.0.0.1:8000 # адрес куда слать HTTP POST
+        volumes:
+            - .:/srv/app
+        working_dir: /srv/app
+        command: >
+            sh -c "python3 -u src/surguard_listener.py"
 
-  postgres:
-    image: postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # PGDATA: /data/postgres
-      POSTGRES_DB: ${POSTGRES_DB}
-    container_name: postgres
-    volumes:
-      # - ./postgres_data:/var/lib/postgresql/data/
-      - postgres_data:/var/lib/postgresql/data  
-    networks:
-      - app-network
+    postgres:
+        image: postgres
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            # PGDATA: /data/postgres
+            POSTGRES_DB: ${POSTGRES_DB}
+        container_name: postgres
+        volumes:
+            # - ./postgres_data:/var/lib/postgresql/data/
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - app-network
 
-  
-  pgadmin:
-    image: dpage/pgadmin4:9.6
-    env_file:
-      - ./.env
-    container_name: pgadmin
-    ports:
-      - 5050:80
-    volumes:
-      - ./servers.json/:/pgadmin4/servers.json
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - app-network
-networks: 
-  app-network:
-    driver: bridge
+    pgadmin:
+        image: dpage/pgadmin4:9.6
+        env_file:
+            - ./.env
+        container_name: pgadmin
+        ports:
+            - 5050:80
+        volumes:
+            - ./servers.json/:/pgadmin4/servers.json
+            - pgadmin_data:/var/lib/pgadmin
+        networks:
+            - app-network
+networks:
+    app-network:
+        driver: bridge
 
 volumes:
-  postgres_data:
-  pgadmin_data:
+    postgres_data:
+    pgadmin_data:
+    redis_data:

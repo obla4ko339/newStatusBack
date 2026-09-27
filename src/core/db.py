@@ -24,6 +24,9 @@ TORTOISE_ORM = {
                 "src.models.notification", 
                 "src.models.notification_type", 
                 "src.models.notification_is_read", 
+                "src.models.user_group_right", 
+                "src.models.user_group_role", 
+                "src.models.sites_local_info", 
                 "aerich.models"
                 ],
             "default_connection": "default"

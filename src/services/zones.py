@@ -22,4 +22,26 @@ class Zones(CnordClient):
             return data
         except Exception as error:
             print(f"getParts {error}")
+
+
+    # Взять раздел под охрану (POST /api/Parts/Arm)
+    async def isArmZoneApi(self, id:str):
+        try:
+            response = await self.client.post(f"/api/Parts/Arm?id={id}",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
+            data = response.json()
+            print(data)
+            return data
+        except Exception as error:
+            print(f"getParts {error}")
+
+
+    # Снять раздел с охраны (POST /api/Parts/Disarm)
+    async def disArmZoneApi(self, id:str):
+        try:
+            response = await self.client.post(f"/api/Parts/Disarm?id={id}",headers={"apiKey": settings.cnord.CNORD_API_KEY},)
+            data = response.json()
+            print(data)
+            return data
+        except Exception as error:
+            print(f"getParts {error}")
         

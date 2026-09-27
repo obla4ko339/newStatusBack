@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from src.models.user import User
 from src.models.sites_user import SitesUser
 from src.models.sites import Sites
+from src.models.sites_local_info import SitesLocalInfo
 from src.models.customers import Customer
 from src.schemas.surgard_event import SurgardEventCreate
 from src.schemas.user import CreateUser
@@ -35,12 +36,26 @@ async def crud_get_sites_search(data:object):
     # print(data.search_term)
     try:
         if data:
-            user_id = data.user_id
-            group = data.group_user
-            search_pattern = f"%{data.search_term}%"
+            user_id = data['user_id']
+            group = data['group_user']
+
+            offset = (data['page'] - 1) * data['number']
+            limit = data['number']
+
+            search_pattern = f"%{data['search_term']}%"
             if group == 1:
                 sql = f"""
                     SELECT * FROM sites
+                    where 
+                    sites."Name" like $1 
+                    or
+                    sites."Address" like $1 
+                    or
+                    sites."AccountNumber"::text like $1 
+                    LIMIT $2 OFFSET $3
+                    """
+                sql_total = f"""
+                    SELECT count(*) as total FROM sites
                     where 
                     sites."Name" like $1 
                     or
@@ -62,10 +77,18 @@ async def crud_get_sites_search(data:object):
                     )
                     """
             # print(sql)
+            response_data = {"total": 0, "result": []}
             connection = Tortoise.get_connection("default")
-            result = await connection.execute_query_dict(sql,[search_pattern])
-            return result
+            if group == 1:
+                result_data = await connection.execute_query_dict(sql,[search_pattern,limit, offset ])
+                result_total = await connection.execute_query_dict(sql_total,[search_pattern])
+                response_data['total'] = result_total[0]['total'] if result_total[0]['total'] else 0
+                response_data['result'] = result_data
+            else:
+                result = await connection.execute_query_dict(sql,[search_pattern])
+            return response_data
     except Exception as error:
+        print(f"crud_get_sites_search {error}")
         return error  
 # вывести объеты по поиску END
 
@@ -74,30 +97,110 @@ async def crud_get_sites_search(data:object):
 async def crud_get_sites_user_id(data:object):
     # print( "group ",data.get("user_id"))
     # print( "user_id ",group) 
+    
     try:
         if data:
             user_id = data.user_id if hasattr(data, 'user_id') else data.get("user_id")
-            group = data.group_user if hasattr(data, 'group_user') else data.get("group_user")
-            
+            group = data.group_user_id if hasattr(data, 'group_user') else data.get("group_user")
+            search = data.get("search", None) 
+
+            offset = (data['page'] - 1) * data['number']
+            limit = data['number']
+
             if group == 1:
-                sql = f"""
-                    SELECT * FROM sites
-                    
+                # result
+                sql = f""" SELECT 
+                    sites.*, 
+                    sites_local_info.local_adress, 
+                    sites_local_info.local_name, 
+                    sites_local_info.local_tel
+                 FROM sites """
+                sql += f""" left join sites_local_info on sites."AccountNumber"=sites_local_info."sites_id" """
+                if search:
+                    sql += f""" where "Name" like $3 """
+
+                sql += f""" LIMIT $1 OFFSET $2 """
+                # result
+                
+                # total
+                sql_total = f"""
+                    SELECT count(*) as total FROM public.sites
                     """
+                if search:
+                    sql_total += f""" where "Name" like $1 """
+                # total
+                
             else:
+                # result
                 sql = f"""
-                    SELECT * FROM public.user_object
+                    SELECT 
+                        sites.*, 
+                    sites_local_info.local_adress, 
+                    sites_local_info.local_name, 
+                    sites_local_info.local_tel
+                     FROM public.user_object
+                    left join sites on object_id=sites."AccountNumber"
+                    left join sites_local_info on sites."AccountNumber"=sites_local_info."sites_id"
+                    left join users on user_id=users."id"
+                    where user_object."active"=true and
+                    """
+                if search:
+                    sql += f""" "Name" like $4 and """
+                sql += f""" users."id" = $1 LIMIT $2 OFFSET $3 """
+                # sql += f""" and user_object."active"=true """
+                # result
+
+                # total
+                sql_total = f"""
+                    SELECT count(*) as total FROM public.user_object
                     left join sites on object_id=sites."AccountNumber"
                     left join users on user_id=users."id"
-                    where users."id" = $1
+                    where user_object."active"=true and 
                     """
+                if search:
+                    sql_total += f""" "Name" like $2 and """
+                sql_total += f""" users."id" = $1 """
+                # total
+
             connection = Tortoise.get_connection("default")
+
+            print(f' SQL SITS {sql}')
+            
+            response_data = {"total": 0, "result": []}
+
             if group == 1:
-                result = await connection.execute_query_dict(sql,[])
+                if search:
+                    search_param = f"%{search}%"
+                    result_total = await connection.execute_query_dict(sql_total,[search_param])
+                else:
+                    result_total = await connection.execute_query_dict(sql_total,[])
+
+                if search:
+                    search_param = f"%{search}%"
+                    result = await connection.execute_query_dict(sql,[limit, offset, search_param])
+                else:
+                    result = await connection.execute_query_dict(sql,[limit, offset])
+                    
+                response_data['total'] = result_total[0]['total'] if result_total[0]['total'] else 0
+                response_data['result'] = result
             else:
-                result = await connection.execute_query_dict(sql,[user_id])
-            return result
+                if search:
+                    search_param = f"%{search}%"
+                    result_total = await connection.execute_query_dict(sql_total,[user_id,search_param])
+                else:
+                    result_total = await connection.execute_query_dict(sql_total,[user_id])
+
+                if search:
+                    search_param = f"%{search}%"
+                    result = await connection.execute_query_dict(sql,[user_id,limit, offset,search_param])
+                else:
+                    result = await connection.execute_query_dict(sql,[user_id,limit, offset])
+
+                response_data['total'] = result_total[0]['total'] if result_total[0]['total'] else 0
+                response_data['result'] = result
+            return response_data
     except Exception as error:
+        print(f"crud_get_sites_user_id {error}")
         return error  
 # вывести объеты по определенному ползователю и группе END
     
@@ -233,6 +336,20 @@ async def crud_get_site_id(AccountNumber:int):
         if result is not None:
             return result  
 
+async def crud_get_site_local_id(AccountNumber:int):
+
+    if AccountNumber:
+        result = await SitesLocalInfo.filter(
+                        sites_id__AccountNumber=AccountNumber  # Фильтр по полю AccountNumber в Sites
+                    ).prefetch_related("sites_id")
+        if isinstance(result, list) and len(result) > 0:
+            result = result[0]
+
+        if not result:
+            result = await Sites.filter(AccountNumber=AccountNumber).first()
+        if result is not None:
+            return result  
+
 async def crud_update_data(data:object):
     try:
         obj = dict(data)
@@ -244,3 +361,49 @@ async def crud_update_data(data:object):
     except Exception as error:
         return error
     
+
+
+async def crud_update_data_local_site(data:object):
+    print(data)
+    try:
+        obj = dict(data)
+        
+        siteFilter = await SitesLocalInfo.filter(sites_id = obj.get("sites_id")).first()
+        
+        # result = await SitesLocalInfo.filter(AccountNumber = obj.get("AccountNumber")).update(**obj)
+        site = await Sites.filter(AccountNumber=obj.get('sites_id')).first()
+        if siteFilter is not None:
+            result = await SitesLocalInfo.filter(sites_id = obj.get("sites_id")).update(
+                sites_id=site, 
+                local_adress=obj.get('Address'), 
+                local_tel=obj.get('Phone1'), 
+                local_name=obj.get('Name'),
+            )
+        else:
+            # result  = await SitesLocalInfo.create(**obj)
+            site = await Sites.filter(AccountNumber=obj.get('sites_id')).first()
+            result  = await SitesLocalInfo.create(
+                sites_id=site, 
+                local_adress=obj.get('Address'), 
+                local_tel=obj.get('Phone1'), 
+                local_name=obj.get('Name'), 
+                )
+            
+        if result:
+            return True
+        else:
+            return False
+    except Exception as error:
+        return error
+
+
+
+#  активация объекта у пользователя 
+async def activeSite(data):
+    try:
+        id = dict(data)
+        result = await SitesUser.filter(id=id.get('id'), active=False).update(active=True)
+        return result
+
+    except Exception as error:
+        return error

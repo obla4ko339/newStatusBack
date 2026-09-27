@@ -28,6 +28,14 @@ class SiteCreate(BaseModel):
 class SitessCreate(BaseModel):
     sites: List[SiteCreate]
 
+class SitessGetSitesForPage(BaseModel):
+    page:int
+    number:int
+    search:Optional[str] = None
+
+class SiteActive(BaseModel): 
+    id:int
+
 
 # class SurgardEventRead(SurgardEventCreate):
 #     id: int

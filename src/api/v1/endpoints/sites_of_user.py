@@ -6,40 +6,73 @@ from src.models.serure_objects import SecurityObject, SecurityObject_Pydantic
 from src.services.sites import Sites
 from pydantic import BaseModel
 from src.crud.sites_of_user import crud_create_site_of_user,crud_get_list_su,crud_del_su,crud_get_list_all
-from src.crud.sites import crud_create_sites,crud_get_sites,crud_get_sites_all
-from src.schemas.sites import SiteCreate,SitesCreate,SitessCreate
+from src.crud.sites import crud_create_sites,crud_get_sites,crud_get_sites_all,crud_get_sites_user_id,activeSite
+from src.schemas.sites import SiteCreate,SitesCreate,SitessCreate,SitessGetSitesForPage,SiteActive
 from fastapi import Request
 from src.api.v1.endpoints.auth import get_current_user
+from src.crud.bd import getUserRequestToken,checkPermission
 
 router = APIRouter(prefix="/sitesuser", tags=["sitesuser"])
 
 
 
+@router.post("/user/active")
+async def getsites(data:SiteActive, request:Request):
+    infoUsers = await getUserRequestToken(request)
+    if not infoUsers:
+        return {"error":"1"}
 
-
-
-@router.get("/user/getsites")
-async def getsites(request:Request):
-    
     try:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split("Bearer ")[1]
-            user = await get_current_user(token)
-            userID = user.id
-            userGroup = user.group_user
-            # print(userID)
-            # print(userGroup)
-            # getSites = await crud_get_sites()
-            
-            getSites = await crud_get_sites_all(userID, userGroup)
+        result = await activeSite(data)
+        return result
 
-            # print("getSites ",getSitess)
-            return getSites
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = error
+            detail = f" error {error}"
+        )
+
+
+
+
+
+
+@router.post("/user/getsites")
+async def getsites(data:SitessGetSitesForPage, request:Request):
+    try:
+        # auth_header = request.headers.get("Authorization")
+        # if auth_header and auth_header.startswith("Bearer "):
+        #     token = auth_header.split("Bearer ")[1]
+        #     user = await get_current_user(token)
+        #     userID = user.id
+        #     userGroup = user.group_user
+            # print(userID)
+            # print(userGroup)
+            # getSites = await crud_get_sites()
+
+        infoUsers = await getUserRequestToken(request)
+        if not infoUsers:
+            return False
+
+        userInfo = {
+            "user_id":infoUsers.id,
+            "group_user":infoUsers.group_user_id,
+            "page":data.page,
+            "number":data.number,
+            "search":data.search
+        }
+        
+            
+        # getSites = await crud_get_sites_all(userID, userGroup)
+        getSites = await crud_get_sites_user_id(userInfo)
+
+        # print("getSites ",getSitess)
+        return getSites
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail = f" error {error}"
         )
 
 
@@ -56,7 +89,7 @@ async def sites_update(data:List[SitesCreate]):
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = "error create user"
+            detail = f"error create user {error}"
         )
 
 
@@ -65,8 +98,11 @@ class sitesUser(BaseModel):
     object_id:int
 
 @router.post("/user/create")
-async def create_sites_user(data:sitesUser):
-    print(data)
+async def create_sites_user(data:sitesUser, request:Request):
+    infoUsers = await getUserRequestToken(request)
+    if not infoUsers:
+        return {"error":1}
+    print(f'CREATE {data}') 
     try:
         result = await crud_create_site_of_user(data)
         return result
@@ -81,7 +117,13 @@ async def create_sites_user(data:sitesUser):
 class SiteUserRequest(BaseModel):
     user_id: int
 @router.post("/user/getlist")
-async def crud_get_list_id(data:SiteUserRequest):
+async def crud_get_list_id(data:SiteUserRequest,request:Request):
+    infoUsers = await getUserRequestToken(request)
+    if not infoUsers:
+        return {"error":1}
+    # CHECK PERMISSION
+    await checkPermission(infoUsers.group_user_id, "sites.view_attached")
+    # CHECK PERMISSION
     try:
         data = await crud_get_list_su(data)
         return data

@@ -13,6 +13,12 @@ class Sites(models.Model):
     Phone2 = fields.CharField(max_length=255)  
     TypeName = fields.CharField(max_length=255)
     EventTemplateName = fields.CharField(max_length=255)
+    # local_info = fields.OneToOneField(
+    #     model_name="models.SitesLocalInfo",
+    #     to_field="sites_id",
+    #     related_name="site", 
+    #     # related_name="site"
+    # )
     
     
 
