@@ -16,7 +16,7 @@ import time
 from fastapi import Request
 from src.services.func import generate_numeric_code
 from src.services.zones import Zones
-from src.crud.bd import getUserRequestToken
+from src.crud.bd import getUserRequestToken,checkPermission
 
 router = APIRouter(prefix="/zone", tags=["zone"])
 
@@ -50,6 +50,10 @@ async def isArmZone(data:ZonesIsArm, request:Request):
     if not infoUsers:
         return False
 
+    # CHECK PERMISSION
+    await checkPermission(infoUsers.group_user_id, "sites.arm_section")
+    # CHECK PERMISSION
+
     objZone = Zones()
     zone = await objZone.isArmZoneApi(data.id)
     return zone
@@ -64,6 +68,10 @@ async def disArmZone(data:ZonesIsArm, request:Request):
     infoUsers = await getUserRequestToken(request)
     if not infoUsers:
         return False
+
+    # CHECK PERMISSION
+    await checkPermission(infoUsers.group_user_id, "sites.disarm")
+    # CHECK PERMISSION
 
     objZone = Zones()
     zone = await objZone.disArmZoneApi(data.id)

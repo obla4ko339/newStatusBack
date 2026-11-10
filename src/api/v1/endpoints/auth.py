@@ -252,7 +252,7 @@ async def login(request: LoginRequest):
     except DoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
+            detail="Incorrect username or password" 
         )
 
 @router.get("/me", response_model=User_Pydantic)
@@ -482,6 +482,10 @@ async def update_user(user:UpdateUser, request:Request):
             return {"error":1}
         userNew = dict(user)
         print(userNew)
+
+        # CHECK PERMISSION
+        await checkPermission(infoUsers.group_user_id, "user.update_phone")
+        # CHECK PERMISSION
 
         if userNew['password'] is not None:
             password = User.hash_password(userNew['password'])

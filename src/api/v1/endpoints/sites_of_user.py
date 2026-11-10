@@ -99,11 +99,15 @@ class sitesUser(BaseModel):
 
 @router.post("/user/create")
 async def create_sites_user(data:sitesUser, request:Request):
-    infoUsers = await getUserRequestToken(request)
-    if not infoUsers:
-        return {"error":1}
-    print(f'CREATE {data}') 
     try:
+        infoUsers = await getUserRequestToken(request)
+        if not infoUsers:
+            return False
+
+        # CHECK PERMISSION
+        await checkPermission(infoUsers.group_user_id, "sites.attach")
+        # CHECK PERMISSION
+
         result = await crud_create_site_of_user(data)
         return result
     except Exception as error:
@@ -137,8 +141,16 @@ async def crud_get_list_id(data:SiteUserRequest,request:Request):
 class SiteUserRequest(BaseModel):
     id: int
 @router.post("/user/del")
-async def crud_del_id(data:SiteUserRequest):
+async def crud_del_id(data:SiteUserRequest, request:Request):
     try:
+        infoUsers = await getUserRequestToken(request)
+        if not infoUsers:
+            return False
+
+        # CHECK PERMISSION
+        await checkPermission(infoUsers.group_user_id, "sites.delete_attached")
+        # CHECK PERMISSION
+
         data = await crud_del_su(data)
         return data
     except Exception as error:

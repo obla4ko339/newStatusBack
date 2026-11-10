@@ -47,21 +47,21 @@ async def crud_get_sites_search(data:object):
                 sql = f"""
                     SELECT * FROM sites
                     where 
-                    sites."Name" like $1 
+                    sites."Name" ilike $1 
                     or
-                    sites."Address" like $1 
+                    sites."Address" ilike $1 
                     or
-                    sites."AccountNumber"::text like $1 
+                    sites."AccountNumber"::text ilike $1 
                     LIMIT $2 OFFSET $3
                     """
                 sql_total = f"""
                     SELECT count(*) as total FROM sites
                     where 
-                    sites."Name" like $1 
+                    sites."Name" ilike $1 
                     or
-                    sites."Address" like $1 
+                    sites."Address" ilike $1 
                     or
-                    sites."AccountNumber"::text like $1 
+                    sites."AccountNumber"::text ilike $1 
                     """
             else:
                 sql = f"""
@@ -69,11 +69,11 @@ async def crud_get_sites_search(data:object):
                     left join sites on object_id=sites."AccountNumber"
                     left join users on user_id=users."id"
                     where users."id" = {user_id} and (
-                        sites."Name" like $1 
+                        sites."Name" ilike $1 
                         or
-                        sites."Address" like $1 
+                        sites."Address" ilike $1 
                         or
-                        sites."AccountNumber"::text like $1  
+                        sites."AccountNumber"::text ilike $1  
                     )
                     """
             # print(sql)
